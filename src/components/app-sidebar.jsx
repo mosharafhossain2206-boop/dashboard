@@ -64,7 +64,7 @@ const data = {
         {
           title: "All Banner",
           icon: List,
-          url: "#",
+          url: "bannerlist",
         },
       ],
     },
@@ -76,12 +76,12 @@ const data = {
         {
           title: "Create Category",
           icon: CloudUpload,
-          url: "#",
+          url: "createCategory",
         },
         {
           title: "All Category",
           icon: List,
-          url: "#",
+          url: "categorylist",
         },
       ],
     },

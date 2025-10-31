@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import axios from "axios";
 import { useEffect } from "react";
 
@@ -46,11 +46,10 @@ const formSchema = z.object({
   }),
 });
 
-export function CreateBanner() {
-  // 🧾 2. Setup form
+export function CreateBanner({ defaultValues }) {
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: defaultValues || {
       title: "",
       description: "",
       targetUrl: "",
@@ -106,8 +105,6 @@ export function CreateBanner() {
         if (err.name !== "AbortError") {
           setError(err.message);
         }
-      } finally {
-        setLoading(false);
       }
     }
 
