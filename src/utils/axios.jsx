@@ -23,50 +23,40 @@ api.interceptors.request.use(
 );
 
 // ✅ Response Interceptor (Handles 401 + token refresh)
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     const originalRequest = error.config;
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error?.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
 
-//     // 🟡 Guard: only retry once
-//     if (error?.response?.status === 401 && !originalRequest._retry) {
-//       originalRequest._retry = true;
+      try {
+        // 🔁 Hit refresh token endpoint
+        const res = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/${
+            import.meta.env.VITE_BASE_API
+          }/auth/refreshToken`,
+          {},
+          { withCredentials: true }
+        );
 
-//       try {
-//         // 🔁 Hit refresh token endpoint
-//         const res = await axios.post(
-//           `${import.meta.env.VITE_BACKEND_URL}/${
-//             import.meta.env.VITE_BASE_API
-//           }/auth/refreshToken`,
-//           { withCredentials: true }
-//         );
+        const token = res.data.data.accesToken;
+        if (!token) {
+          throw new Error("token not found");
+        }
+        localStorage.setItem("acceesToken", token);
+        api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        console.error("🔴 Refresh token failed:", refreshError);
+        localStorage.removeItem("acceesToken");
+        window.location.href = "/signin";
+        return Promise.reject(refreshError);
+      }
+    }
 
-//         const accessToken = res.data?.data?.accessToken;
-
-//         if (accessToken) {
-//           console.log("accessToken from axios interceptor", accessToken);
-//           // ✅ Store new token
-//           localStorage.setItem("acceesToken", JSON.stringify(accessToken));
-
-//           // ✅ Update both default and current headers
-//           api.defaults.headers.common[
-//             "Authorization"
-//           ] = `Bearer ${accessToken}`;
-//           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-
-//           // 🔁 Retry the failed request
-//           return api(originalRequest);
-//         }
-//       } catch (refreshError) {
-//         console.error("🔴 Refresh token failed:", refreshError);
-//         localStorage.removeItem("acceesToken");
-//         // window.location.href = "/login";
-//         return Promise.reject(refreshError);
-//       }
-//     }
-
-//     return Promise.reject(error);
-//   }
-// );
+    return Promise.reject(error);
+  }
+);
 
 export { api };

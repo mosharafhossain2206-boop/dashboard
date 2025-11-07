@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useEffect } from "react";
 import { api } from "../../../utils/axios";
+import { useCreateBanner } from "../../../hooks/useCreateBanner";
 
 // 🧠 1. Zod validation schema
 const formSchema = z.object({
@@ -46,6 +47,8 @@ const formSchema = z.object({
 });
 
 export function CreateBanner({ defaultValues }) {
+  const createbanner = useCreateBanner();
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues || {
@@ -63,29 +66,7 @@ export function CreateBanner({ defaultValues }) {
 
   // 🧩 3. Handle submit
   async function onSubmit(values) {
-    const formData = new FormData();
-    for (const key in values) {
-      if (key === "image") {
-        formData.append("image", values.image[0]);
-      } else {
-        formData.append(key, values[key]);
-      }
-    }
-
-    try {
-      const response = await api.post(
-        "/banner/create-banner",
-        { ...values, image: values.image[0] },
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      console.log(response);
-    } catch (error) {
-      console.log(error);
-    }
+    createbanner.mutate(values);
   }
 
   return (
@@ -236,8 +217,8 @@ export function CreateBanner({ defaultValues }) {
         />
 
         <div className="md:col-span-2 flex justify-end">
-          <Button type="submit" className="w-full md:w-auto">
-            Submit
+          <Button type="submit" disabled={createbanner.isPending}>
+            {createbanner.isPending ? "Creating..." : "Create Banner"}
           </Button>
         </div>
       </form>

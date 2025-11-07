@@ -19,38 +19,45 @@ import { CreateVariant } from "./components/dashboard/variant/CreateVariant";
 import { VariantList } from "./components/dashboard/variant/VariantList";
 import SignupPage from "./components/dashboard/auth/Registration";
 import { Login } from "./components/dashboard/auth/Login";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+// Create a client
 
 const App = () => {
+  const queryClient = new QueryClient();
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />}>
-          <Route path="createBanner" element={<CreateBanner />} />
-          <Route path="bannerlist" element={<BannerList />} />
-          <Route path="editBanner/:id" element={<EditBanner />} />
-          <Route path="createCategory" element={<CreateCategory />} />
-          <Route path="categorylist" element={<CategoryList />} />
-          <Route path="editcategory/:id" element={<EditCategory />} />
-          <Route path="createSubcategory" element={<CreateSubcategory />} />
-          <Route path="subcategorylist" element={<SubCategoryList />} />
-          <Route path="editsubcategory/:id" element={<EditSubCategory />} />
-          <Route path="createBrand" element={<CreateBrand />} />
-          <Route path="brandlist" element={<BrandList />} />
-          <Route path="editbrand/:id" element={<EditBrand />} />
-          <Route path="createProduct" element={<CreateProduct />} />
-          <Route path="productlist" element={<ProductList />} />
-          <Route path="editproduct/:id" element={<EditProduct />} />
-          <Route path="createVariant" element={<CreateVariant />} />
-          <Route path="variantlist" element={<VariantList />} />
-        </Route>
+    <QueryClientProvider client={queryClient}>
+      <ReactQueryDevtools initialIsOpen={false} />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />}>
+            <Route path="createBanner" element={<CreateBanner />} />
+            <Route path="bannerlist" element={<BannerList />} />
+            <Route path="editBanner/:id" element={<EditBanner />} />
+            <Route path="createCategory" element={<CreateCategory />} />
+            <Route path="categorylist" element={<CategoryList />} />
+            <Route path="editcategory/:id" element={<EditCategory />} />
+            <Route path="createSubcategory" element={<CreateSubcategory />} />
+            <Route path="subcategorylist" element={<SubCategoryList />} />
+            <Route path="editsubcategory/:id" element={<EditSubCategory />} />
+            <Route path="createBrand" element={<CreateBrand />} />
+            <Route path="brandlist" element={<BrandList />} />
+            <Route path="editbrand/:id" element={<EditBrand />} />
+            <Route path="createProduct" element={<CreateProduct />} />
+            <Route path="productlist" element={<ProductList />} />
+            <Route path="editproduct/:id" element={<EditProduct />} />
+            <Route path="createVariant" element={<CreateVariant />} />
+            <Route path="variantlist" element={<VariantList />} />
+          </Route>
 
-        <Route>
-          <Route path="*" element={<h1>404 Not Found</h1>} />
-          <Route path="signup" element={<SignupPage />} />
-          <Route path="signin" element={<Login />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+          <Route>
+            <Route path="*" element={<h1>404 Not Found</h1>} />
+            <Route path="signup" element={<SignupPage />} />
+            <Route path="signin" element={<Login />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 };
 
