@@ -1,209 +1,237 @@
 import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Eye, EyeOff } from "lucide-react";
+import { api } from "../utils/axios";
+import { useNavigate } from "react-router";
 
-// ✅ Validation Schema
-const signupSchema = z
+// ✅ Zod validation schema
+const SignupSchema = z
   .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    emailOrPhone: z
+    name: z.string().min(3, "Full name must be at least 3 characters"),
+    phone: z
       .string()
-      .min(1, "Email or phone is required")
+      .optional()
       .refine(
-        (value) => {
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          const phoneRegex = /^[0-9]{10,15}$/;
-          return emailRegex.test(value) || phoneRegex.test(value);
-        },
-        { message: "Enter a valid email or phone number" }
+        (val) => !val || /^01[3-9]\d{8}$/.test(val),
+        "Enter a valid Bangladeshi phone number"
       ),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string().min(8, "Confirm password is required"),
+    email: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+        "Enter a valid email address"
+      ),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Must include an uppercase letter")
+      .regex(/[a-z]/, "Must include a lowercase letter")
+      .regex(/[0-9]/, "Must include a number")
+      .regex(/[@$!%*?&]/, "Must include a special character"),
+    confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords must match",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
-export default function SignupForm() {
+export function SignupForm({ className, ...props }) {
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const form = useForm({
-    resolver: zodResolver(signupSchema),
+    resolver: zodResolver(SignupSchema),
     defaultValues: {
       name: "",
-      emailOrPhone: "",
+      phone: "",
+      email: "",
       password: "",
       confirmPassword: "",
     },
   });
 
-  const onSubmit = (values) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[0-9]{10,15}$/;
-    let email = null;
-    let phone = null;
-    if (emailRegex.test(values.emailOrPhone)) email = values.emailOrPhone;
-    else if (phoneRegex.test(values.emailOrPhone)) phone = values.emailOrPhone;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = form;
 
-    console.log({
-      name: values.name,
-      email,
-      phone,
-      password: values.password,
-    });
-    alert("Form logged in console!");
+  const onSubmit = async (values) => {
+    console.log("✅ Form Data:", values);
+    try {
+      const response = await api.post("/auth/registraion", values, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.log("✅ Registration Success:", response.data);
+      if (response.data) {
+        navigate("/signin");
+      }
+    } catch (error) {
+      console.error("❌ Registration Error:", error);
+    } finally {
+      form.reset();
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="flex w-full max-w-4xl shadow-lg rounded-xl overflow-hidden">
-        {/* Left - Form */}
-        <div className="w-full md:w-1/2 bg-white p-10 flex flex-col justify-center">
-          <div className="mb-6 text-center">
-            <h1 className="text-2xl font-bold mb-2">
-              Create your free account
-            </h1>
-            <Button
-              variant="outline"
-              className="w-full mb-4 flex items-center justify-center gap-2"
-            >
-              <img src="/google-icon.svg" alt="Google" className="w-5 h-5" />
-              Sign up with Google
-            </Button>
-            <div className="flex items-center my-4">
-              <hr className="grow border-gray-300" />
-              <span className="mx-2 text-gray-400">or</span>
-              <hr className="grow border-gray-300" />
-            </div>
-          </div>
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* Name Field */}
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter your name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Email or Phone Field */}
-              <FormField
-                control={form.control}
-                name="emailOrPhone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email or Phone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter email or phone" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Password Field */}
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Confirm Password Field */}
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Confirm Password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button
-                type="submit"
-                className="w-full bg-black text-white hover:bg-gray-900"
-              >
-                Continue
-              </Button>
-            </form>
-          </Form>
-
-          <p className="text-xs text-gray-400 mt-4 text-center">
-            By proceeding, you accept the{" "}
-            <a href="#" className="underline">
-              Terms
-            </a>{" "}
-            and{" "}
-            <a href="#" className="underline">
-              Privacy Policy
-            </a>
-            .
-          </p>
-
-          <p className="text-sm text-center mt-4">
-            Already a user?{" "}
-            <a href="/login" className="text-black underline">
-              Log in
-            </a>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className={cn("flex flex-col gap-6", className)}
+      {...props}
+    >
+      <FieldGroup>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <h1 className="text-2xl font-bold">Create your account</h1>
+          <p className="text-muted-foreground text-sm text-balance">
+            Fill in the form below to create your account
           </p>
         </div>
 
-        {/* Right - Illustration */}
-        <div className="hidden md:flex w-1/2 bg-gray-100 items-center justify-center">
-          <svg className="w-64 h-64" viewBox="0 0 200 200">
-            <circle
-              cx="100"
-              cy="100"
-              r="80"
-              stroke="black"
-              strokeWidth="2"
-              fill="none"
+        {/* Full Name */}
+        <Field>
+          <FieldLabel htmlFor="name">Full Name</FieldLabel>
+          <Input
+            id="name"
+            type="text"
+            placeholder="John Doe"
+            {...register("name")}
+          />
+          {errors.name && (
+            <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+          )}
+        </Field>
+
+        {/* Phone (optional) */}
+        <Field>
+          <FieldLabel htmlFor="phone">Phone (optional)</FieldLabel>
+          <Input
+            id="phone"
+            type="text"
+            placeholder="017xxxxxxxx"
+            {...register("phone")}
+          />
+          {errors.phone && (
+            <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
+          )}
+        </Field>
+
+        {/* Email (optional) */}
+        <Field>
+          <FieldLabel htmlFor="email">Email (optional)</FieldLabel>
+          <Input
+            id="email"
+            type="email"
+            placeholder="m@example.com"
+            {...register("email")}
+          />
+          <FieldDescription>
+            We&apos;ll use this to contact you. We will not share your email.
+          </FieldDescription>
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+          )}
+        </Field>
+
+        {/* Password */}
+        <Field>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              {...register("password")}
+              placeholder="Enter password"
             />
-            <line x1="100" y1="20" x2="100" y2="180" stroke="black" />
-            <line x1="20" y1="100" x2="180" y2="100" stroke="black" />
-            <line x1="40" y1="40" x2="160" y2="160" stroke="black" />
-            <line x1="160" y1="40" x2="40" y2="160" stroke="black" />
-          </svg>
-        </div>
-      </div>
-    </div>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700"
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff size={18} strokeWidth={1.8} />
+              ) : (
+                <Eye size={18} strokeWidth={1.8} />
+              )}
+            </button>
+          </div>
+          <FieldDescription>
+            Must be at least 8 characters long.
+          </FieldDescription>
+          {errors.password && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.password.message}
+            </p>
+          )}
+        </Field>
+
+        {/* Confirm Password */}
+        <Field>
+          <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
+          <div className="relative">
+            <Input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              {...register("confirmPassword")}
+              placeholder="Confirm password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700"
+              tabIndex={-1}
+            >
+              {showConfirmPassword ? (
+                <EyeOff size={18} strokeWidth={1.8} />
+              ) : (
+                <Eye size={18} strokeWidth={1.8} />
+              )}
+            </button>
+          </div>
+          {errors.confirmPassword && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.confirmPassword.message}
+            </p>
+          )}
+        </Field>
+
+        <Field>
+          <Button type="submit">Create Account</Button>
+        </Field>
+
+        <FieldSeparator>Or continue with</FieldSeparator>
+
+        <Field>
+          <Button variant="outline" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path
+                d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+                fill="currentColor"
+              />
+            </svg>
+            Sign up with GitHub
+          </Button>
+          <FieldDescription className="px-6 text-center">
+            Already have an account? <a href="#">Sign in</a>
+          </FieldDescription>
+        </Field>
+      </FieldGroup>
+    </form>
   );
 }

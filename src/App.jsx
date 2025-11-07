@@ -17,7 +17,8 @@ import { ProductList } from "./components/dashboard/product/ProductList";
 import { EditProduct } from "./components/dashboard/product/EditProduct";
 import { CreateVariant } from "./components/dashboard/variant/CreateVariant";
 import { VariantList } from "./components/dashboard/variant/VariantList";
-import { SignupForm } from "./components/signup-form";
+import SignupPage from "./components/dashboard/auth/Registration";
+import { Login } from "./components/dashboard/auth/Login";
 
 const App = () => {
   return (
@@ -42,9 +43,11 @@ const App = () => {
           <Route path="createVariant" element={<CreateVariant />} />
           <Route path="variantlist" element={<VariantList />} />
         </Route>
+
         <Route>
           <Route path="*" element={<h1>404 Not Found</h1>} />
-          <Route path="signup" element={<SignupForm />} />
+          <Route path="signup" element={<SignupPage />} />
+          <Route path="signin" element={<Login />} />
         </Route>
       </Routes>
     </BrowserRouter>

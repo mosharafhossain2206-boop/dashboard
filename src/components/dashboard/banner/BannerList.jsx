@@ -45,7 +45,7 @@ export function BannerList() {
       <Virtuoso
         data={data}
         itemContent={(index, item) => (
-          <div className="grid grid-cols-[150px_120px_200px_200px_300px_100px_180px_150px] items-center border-b text-sm hover:bg-gray-50 transition-all py-5">
+          <div className="grid grid-cols-[150px_120px_150px_200px_120px_100px_180px_150px] items-center border-b text-sm hover:bg-gray-50 transition-all py-5">
             <div className="truncate px-2">{item.title}</div>
             <div className="px-2">
               <img

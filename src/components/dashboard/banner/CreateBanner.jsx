@@ -13,9 +13,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
-import axios from "axios";
 import { useEffect } from "react";
+import { api } from "../../../utils/axios";
 
 // 🧠 1. Zod validation schema
 const formSchema = z.object({
@@ -73,48 +72,22 @@ export function CreateBanner({ defaultValues }) {
       }
     }
 
-    const response = await axios.post(
-      "http://localhost:3000/api/v1/banner/create-banner",
-      { ...values, image: values.image[0] },
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-    console.log(response);
+    try {
+      const response = await api.post(
+        "/banner/create-banner",
+        { ...values, image: values.image[0] },
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    async function fetchBanners() {
-      try {
-        const res = await fetch(
-          "http://localhost:3000/api/v1/banner/get-banner",
-          { signal }
-        );
-        if (!res.ok) {
-          throw new Error(`Error ${res.status}: ${res.statusText}`);
-        }
-
-        const data = await res.json();
-        console.log(data);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          setError(err.message);
-        }
-      }
-    }
-
-    fetchBanners();
-
-    return () => {
-      controller.abort();
-    };
-  }, []);
-  // 🧱 4. UI form
   return (
     <Form {...form}>
       <form
