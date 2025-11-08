@@ -1,12 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { Virtuoso } from "react-virtuoso";
 import { getAllbanner } from "../../api/Api";
 import BannerTableSkeleton from "../../skeleton/BannerList";
 import GenericError from "../../error/Generics";
+import DeleteConfirmModal from "../../commonCoponents/DeleteConfirmModal";
+import { useDeleteBanner } from "../../../hooks/useCreateBanner";
 
 export function BannerList() {
   const navigate = useNavigate();
+  const deleteBanner = useDeleteBanner();
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { data, isError, isLoading, refetch } = getAllbanner();
 
   if (isLoading) {
@@ -15,15 +20,23 @@ export function BannerList() {
   if (isError) {
     return <GenericError message="bannelist no Found" onRetry={refetch} />;
   }
-  console.log(data.data);
 
   const handleEdit = (item) => {
-    navigate(`/editBanner/1`);
+    navigate(`/editBanner/${item}`);
   };
 
   const handleDelete = (item) => {
-    if (window.confirm(`Delete "${item.title}"?`)) {
-      alert("Deleted!");
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+  const confirmDelete = async () => {
+    try {
+      // api hit
+      deleteBanner.mutate(selectedItem);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsModalOpen(false);
     }
   };
 
@@ -76,13 +89,13 @@ export function BannerList() {
             </div>
             <div className="flex justify-center gap-2">
               <button
-                onClick={() => handleEdit(item)}
+                onClick={() => handleEdit(item.slug)}
                 className="px-3 py-3 text-xs cursor-pointer bg-blue-500 text-white rounded hover:bg-blue-600"
               >
                 Edit
               </button>
               <button
-                onClick={() => handleDelete(item)}
+                onClick={() => handleDelete(item._id)}
                 className="px-3 cursor-pointer py-3 text-xs bg-red-500 text-white rounded hover:bg-red-600"
               >
                 Delete
@@ -90,6 +103,15 @@ export function BannerList() {
             </div>
           </div>
         )}
+      />
+
+      {/* Delete Modal */}
+      <DeleteConfirmModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={confirmDelete}
+        item={selectedItem}
+        isLoading={deleteBanner.isPending}
       />
     </div>
   );

@@ -13,9 +13,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useEffect } from "react";
-import { api } from "../../../utils/axios";
-import { useCreateBanner } from "../../../hooks/useCreateBanner";
+import {
+  useCreateBanner,
+  useUpdateBanner,
+} from "../../../hooks/useCreateBanner";
 
 // 🧠 1. Zod validation schema
 const formSchema = z.object({
@@ -48,9 +49,10 @@ const formSchema = z.object({
 
 export function CreateBanner({ defaultValues }) {
   const createbanner = useCreateBanner();
+  const updateBanner = useUpdateBanner();
 
   const form = useForm({
-    resolver: zodResolver(formSchema),
+    resolver: defaultValues ? undefined : zodResolver(formSchema),
     defaultValues: defaultValues || {
       title: "",
       description: "",
@@ -66,7 +68,13 @@ export function CreateBanner({ defaultValues }) {
 
   // 🧩 3. Handle submit
   async function onSubmit(values) {
-    createbanner.mutate(values);
+    if (defaultValues) {
+      updateBanner.mutate({ ...values, id: defaultValues._id });
+    } else {
+      createbanner.mutate(values);
+    }
+    form.resetField();
+    form.reset();
   }
 
   return (
@@ -172,7 +180,7 @@ export function CreateBanner({ defaultValues }) {
           name="startDate"
           render={({ field }) => (
             <FormItem className="w-full">
-              <FormLabel>Start Date</FormLabel>
+              <FormLabel>Start Date </FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -204,11 +212,26 @@ export function CreateBanner({ defaultValues }) {
             <FormItem className="w-full md:col-span-2">
               <FormLabel>Banner Image</FormLabel>
               <FormControl>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => field.onChange(e.target.files)}
-                />
+                {defaultValues?.image ? (
+                  <div className="grid grid-cols-2 items-center">
+                    <img
+                      src={defaultValues.image.url}
+                      alt={defaultValues.image.publicId}
+                      className=" h-30"
+                    />
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => field.onChange(e.target.files)}
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => field.onChange(e.target.files)}
+                  />
+                )}
               </FormControl>
               <FormDescription>Upload your banner image</FormDescription>
               <FormMessage />
@@ -217,8 +240,17 @@ export function CreateBanner({ defaultValues }) {
         />
 
         <div className="md:col-span-2 flex justify-end">
-          <Button type="submit" disabled={createbanner.isPending}>
-            {createbanner.isPending ? "Creating..." : "Create Banner"}
+          <Button
+            type="submit"
+            disabled={createbanner.isPending || updateBanner.isPending}
+          >
+            {defaultValues
+              ? updateBanner.isPending
+                ? "Updating..."
+                : "Update Banner"
+              : createbanner.isPending
+              ? "Creating..."
+              : "Create Banner"}
           </Button>
         </div>
       </form>
